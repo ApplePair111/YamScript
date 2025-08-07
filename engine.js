@@ -1,24 +1,24 @@
 function runYamScript() {
-  const rawYAML = window.editor.getValue(); // Monaco code
+  const rawYAML = window.editor.getValue();
   let gameData;
 
   try {
-    gameData = jsyaml.load(rawYAML); // imported in index.html
+    gameData = jsyaml.load(rawYAML);
     console.log("Parsed YAML:", gameData);
     runGame(gameData);
   } catch (err) {
     alert("YAML Error: " + err.message);
   }
 }
+
 const engine = {
-  sprites: {},           // runtime sprite data (DOM, position, etc.)
-  uploadedImages: {},    // imageName → dataURL (from Add Sprite)
-  variables: {},         // global vars for math-add etc.
-  code: {},              // parsed YAML logic
-  meta: {},              // name, author, etc.
+  sprites: {},
+  uploadedImages: {},
+  variables: {},
+  code: {},
+  meta: {},
 
   reset() {
-    // Clear DOM + internal state
     document.getElementById("game-area").innerHTML = "";
     this.sprites = {};
     this.variables = {};
@@ -42,7 +42,7 @@ const engine = {
     el.style.backgroundSize = "cover";
 
     document.getElementById("game-area").appendChild(el);
-    this.sprites[name] = { el, x: 0, y: 0 };
+    this.sprites[name] = { el, x: 0, y: 0, scale: 1, rotate: 0 };
   },
 
   move(name, dir, amount) {
@@ -70,19 +70,63 @@ const engine = {
 
   addVar(name, val) {
     this.variables[name] = (this.variables[name] || 0) + val;
+  },
+
+  scale(name, multiplier) {
+    const s = this.sprites[name];
+    if (!s) return;
+
+    s.scale = multiplier;
+    s.el.style.transform = `scale(${s.scale}) rotate(${s.rotate}deg)`;
+  },
+
+  rotate(name, degrees) {
+    const s = this.sprites[name];
+    if (!s) return;
+
+    s.rotate += degrees;
+    s.el.style.transform = `scale(${s.scale}) rotate(${s.rotate}deg)`;
+  },
+
+  say(name, message) {
+    const s = this.sprites[name];
+    if (!s) return;
+
+    // Remove previous bubble
+    const old = s.el.querySelector(".speech-bubble");
+    if (old) old.remove();
+
+    const bubble = document.createElement("div");
+    bubble.className = "speech-bubble";
+    bubble.innerText = message;
+    bubble.style.position = "absolute";
+    bubble.style.bottom = "60px";
+    bubble.style.left = "0";
+    bubble.style.padding = "4px 8px";
+    bubble.style.background = "#fff";
+    bubble.style.color = "#000";
+    bubble.style.borderRadius = "6px";
+    bubble.style.fontSize = "14px";
+    bubble.style.whiteSpace = "nowrap";
+
+    s.el.appendChild(bubble);
+    setTimeout(() => bubble.remove(), 2000); // auto-remove after 2s
+  },
+
+  wait(seconds) {
+    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
   }
 };
-function runGame(data) {
+
+async function runGame(data) {
   engine.reset();
   engine.meta = data.meta || {};
   engine.code = data.code || {};
 
-  // Create sprites
   for (const [spriteName, imageName] of Object.entries(data.sprites || {})) {
     engine.createSprite(spriteName, imageName);
   }
 
-  // Execute sprite code
   for (const [spriteName, instructions] of Object.entries(data.code || {})) {
     for (const instr of instructions) {
       const [fn, val] = Object.entries(instr)[0];
@@ -99,13 +143,20 @@ function runGame(data) {
         case "math":
           if (cmd === "add") engine.addVar(val.var, val.value);
           break;
+        case "control":
+          if (cmd === "wait") await engine.wait(val);
+          break;
+        case "looks":
+          if (cmd === "scale") engine.scale(spriteName, val);
+          if (cmd === "rotate") engine.rotate(spriteName, val);
+          if (cmd === "say") engine.say(spriteName, val);
+          break;
         default:
           console.warn("Unknown command:", fn);
       }
     }
   }
 }
-engine.uploadedImages = {};
 
 function triggerImageUpload() {
   const input = document.getElementById("image-upload");
@@ -116,14 +167,4 @@ function triggerImageUpload() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function (e) {
-      const dataURL = e.target.result;
-      const imageName = prompt("Enter an image name (e.g. cat_img):");
-      if (!imageName) return alert("Image name is required.");
-
-      engine.uploadedImages[imageName] = dataURL;
-      alert(`✅ Sprite "${imageName}" added! Use it in the sprites section.`);
-    };
-    reader.readAsDataURL(file);
-  };
-}
+    reader.onload =
