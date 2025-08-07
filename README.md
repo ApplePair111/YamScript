@@ -59,7 +59,7 @@ Made with 🧠 and 🍟 by **ApplePair111**
 ## 📜 License
 
 Licensed under the **Apache License 2.0**  
-See [`LICENSE`](./LICENSE) for full text.
+See [`LICENSE`](./LICENSE.md) for full text.
 
 ---
 
