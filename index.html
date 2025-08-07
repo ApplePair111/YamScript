@@ -56,7 +56,10 @@
   <!-- Monaco Loader -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 
-<div id="editor" style="height: 400px; border: 1px solid #ccc;"></div>
+<div id="editor-container">
+  <div id="editor"></div>
+  <button id="run-button" onclick="runYamScript()">▶️ Run Game</button>
+</div>
 
 <script>
   require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
@@ -76,7 +79,7 @@
         '    - motion-right: 10'
       ].join('\n'),
       language: 'yaml',
-      theme: 'vs-light',
+      theme: 'vs-dark',
       fontSize: 14,
       automaticLayout: true
     });
