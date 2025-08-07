@@ -57,6 +57,8 @@
 
 <div id="editor-container">
   <div id="editor"></div>
+  <button onclick="triggerImageUpload()">➕ Add Sprite</button>
+  <input type="file" id="image-upload" accept="image/*" style="display: none;" />
   <button id="run-button" onclick="runYamScript()">▶️ Run Game</button>
 </div>
 <div id="game-area" style="width: 500px; height: 400px; background: #222; position: relative; margin-top: 20px;"></div>
