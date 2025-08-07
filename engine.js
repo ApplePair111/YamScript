@@ -105,3 +105,25 @@ function runGame(data) {
     }
   }
 }
+engine.uploadedImages = {};
+
+function triggerImageUpload() {
+  const input = document.getElementById("image-upload");
+  input.click();
+
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const dataURL = e.target.result;
+      const imageName = prompt("Enter an image name (e.g. cat_img):");
+      if (!imageName) return alert("Image name is required.");
+
+      engine.uploadedImages[imageName] = dataURL;
+      alert(`✅ Sprite "${imageName}" added! Use it in the sprites section.`);
+    };
+    reader.readAsDataURL(file);
+  };
+}
