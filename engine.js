@@ -1,16 +1,10 @@
 function runYamScript() {
-  alert("button pressed")
+  if (!window.editor) {
+    alert("Editor not ready yet");
+    return;
+  }
   const rawYAML = window.editor.getValue();
   let gameData;
-try {
-  const runBtn = document.getElementById("run-button");
-  runBtn.addEventListener("click", () => {
-    alert("script run")
-  })
-} catch (err) {
-  alert("Error: " + err.message);
-}
-  
 
   try {
     gameData = jsyaml.load(rawYAML);
@@ -22,11 +16,11 @@ try {
 }
 
 const engine = {
-  sprites: {},
-  uploadedImages: {},
-  variables: {},
-  code: {},
-  meta: {},
+  sprites: {},          // runtime sprite data
+  uploadedImages: {},   // imageName → dataURL
+  variables: {},        // global vars
+  code: {},             // parsed YAML logic
+  meta: {},             // meta info from YAML
 
   reset() {
     document.getElementById("game-area").innerHTML = "";
@@ -40,7 +34,6 @@ const engine = {
       alert(`Missing image "${imageName}"`);
       return;
     }
-
     const el = document.createElement("div");
     el.className = "sprite";
     el.style.backgroundImage = `url(${src})`;
@@ -50,7 +43,6 @@ const engine = {
     el.style.left = "0px";
     el.style.top = "0px";
     el.style.backgroundSize = "cover";
-
     document.getElementById("game-area").appendChild(el);
     this.sprites[name] = { el, x: 0, y: 0, scale: 1, rotate: 0 };
   },
@@ -58,12 +50,10 @@ const engine = {
   move(name, dir, amount) {
     const s = this.sprites[name];
     if (!s) return;
-
     if (dir === "right") s.x += amount;
     if (dir === "left") s.x -= amount;
     if (dir === "down") s.y += amount;
     if (dir === "up") s.y -= amount;
-
     s.el.style.left = s.x + "px";
     s.el.style.top = s.y + "px";
   },
@@ -85,7 +75,6 @@ const engine = {
   scale(name, multiplier) {
     const s = this.sprites[name];
     if (!s) return;
-
     s.scale = multiplier;
     s.el.style.transform = `scale(${s.scale}) rotate(${s.rotate}deg)`;
   },
@@ -93,7 +82,6 @@ const engine = {
   rotate(name, degrees) {
     const s = this.sprites[name];
     if (!s) return;
-
     s.rotate += degrees;
     s.el.style.transform = `scale(${s.scale}) rotate(${s.rotate}deg)`;
   },
@@ -101,11 +89,8 @@ const engine = {
   say(name, message) {
     const s = this.sprites[name];
     if (!s) return;
-
-    // Remove previous bubble
     const old = s.el.querySelector(".speech-bubble");
     if (old) old.remove();
-
     const bubble = document.createElement("div");
     bubble.className = "speech-bubble";
     bubble.innerText = message;
@@ -118,9 +103,8 @@ const engine = {
     bubble.style.borderRadius = "6px";
     bubble.style.fontSize = "14px";
     bubble.style.whiteSpace = "nowrap";
-
     s.el.appendChild(bubble);
-    setTimeout(() => bubble.remove(), 2000); // auto-remove after 2s
+    setTimeout(() => bubble.remove(), 2000);
   },
 
   wait(seconds) {
@@ -171,10 +155,21 @@ async function runGame(data) {
 function triggerImageUpload() {
   const input = document.getElementById("image-upload");
   input.click();
-
   input.onchange = () => {
     const file = input.files[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload =
+    reader.onload = function (e) {
+      const dataURL = e.target.result;
+      const imageName = prompt("Enter an image name (e.g. cat_img):");
+      if (!imageName) return alert("Image name is required.");
+      engine.uploadedImages[imageName] = dataURL;
+      alert(`✅ Sprite "${imageName}" added! Use it in the sprites section.`);
+    };
+    reader.readAsDataURL(file);
+  };
+}
+
+// expose functions for inline onclick
+window.runYamScript = runYamScript;
+window.triggerImageUpload = triggerImageUpload;
