@@ -3,7 +3,7 @@ function runYamScript() {
   const rawYAML = window.editor.getValue();
   let gameData;
 try {
-  const runBtn = document.getElementById("run_button");
+  const runBtn = document.getElementById("run-button");
   runBtn.addEventListener("click", () => {
     alert("script run")
   })
