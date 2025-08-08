@@ -2,6 +2,15 @@ function runYamScript() {
   alert("button pressed")
   const rawYAML = window.editor.getValue();
   let gameData;
+try {
+  const runBtn = document.getElementById("run_button");
+  runBtn.addEventListener("click", () => {
+    alert("script run")
+  })
+} catch (err) {
+  alert("Error: " + err.message);
+}
+  
 
   try {
     gameData = jsyaml.load(rawYAML);
