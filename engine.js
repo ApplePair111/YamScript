@@ -1,4 +1,5 @@
 function runYamScript() {
+  alert("button pressed")
   const rawYAML = window.editor.getValue();
   let gameData;
 
